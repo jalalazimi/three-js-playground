@@ -17,8 +17,8 @@ function init() {
 
   if (window.enbaledFog) scene.fog = new THREE.FogExp2(0xffffff, 0.2);
 
-  const plane = getPlane(100);
-  const boxGrid = getBoxGrid(20, 2.5);
+  const plane = getPlane(30);
+  const boxGrid = getBoxGrid(10, 0.5);
   // const ambientLight = getAmbientLight(1);
   const light = getDirectionLight(1);
   const sphere = getSphere(0.05);
@@ -37,8 +37,9 @@ function init() {
   // scene.add(ambientLight);
 
   gui.add(light, "intensity", 0, 10);
-  // gui.add(light.position, "y", 0, 10);
-  // gui.add(light.position, "x", 0, 10);
+  gui.add(light.position, "y", 0, 10);
+  gui.add(light.position, "x", 0, 10);
+  gui.add(light.position, "z", 0, 10);
   // gui.add(light, "penumbra", 0, 1);
 
   const camera = new THREE.PerspectiveCamera(
@@ -47,78 +48,33 @@ function init() {
     1,
     1000
   );
-
-  const cameraYPosition = new THREE.Group();
-  const cameraZPosition = new THREE.Group();
-  const cameraYRotation = new THREE.Group();
-  const cameraXRotation = new THREE.Group();
-  const cameraZRotation = new THREE.Group();
-
-  cameraZRotation.name = "cameraZRotation";
-  cameraYPosition.name = "cameraYPosition";
-  cameraZPosition.name = "cameraZPosition";
-  cameraXRotation.name = "cameraXRotation";
-  cameraYRotation.name = "cameraYRotation";
-
-  cameraZRotation.add(camera);
-  cameraYPosition.add(cameraZRotation);
-  cameraZPosition.add(cameraYPosition);
-  cameraXRotation.add(cameraZPosition);
-  cameraYRotation.add(cameraXRotation);
-  scene.add(cameraYRotation);
-
-  cameraXRotation.rotation.x = -Math.PI / 2;
-  cameraYPosition.position.y = 1;
-  cameraZPosition.position.z = 100;
-
-  gui.add(cameraZPosition.position, "z", 0, 100);
-  gui.add(cameraYRotation.rotation, "y", -Math.PI, Math.PI);
-  gui.add(cameraXRotation.rotation, "x", -Math.PI, Math.PI);
-  gui.add(cameraZRotation.rotation, "z", -Math.PI, Math.PI);
-
-  // camera.position.z = 5;
-  // camera.position.x = 1;
-  // camera.position.y = 2;
-  // camera.lookAt(new THREE.Vector3(0, 0, 0));
+  camera.position.z = 5;
+  camera.position.x = 1;
+  camera.position.y = 2;
+  camera.lookAt(new THREE.Vector3(0, 0, 0));
 
   const render = new THREE.WebGLRenderer();
 
   render.shadowMap.enabled = true;
   render.setSize(innerWidth, innerHeight);
-  render.setClearColor("rgb(25,120,120)");
+  render.setClearColor("rgb(120,120,120)");
   document.getElementById("webgl").appendChild(render.domElement);
-  const controls = new OrbitControls(camera, render.domElement);
-  update(render, scene, camera, controls, clock);
+  new OrbitControls(camera, render.domElement);
+  update(render, scene, camera, clock);
   return scene;
 }
 
-function update(render, scene, camera, controls, clock) {
+function update(render, scene, camera, clock) {
   render.render(scene, camera);
 
-  controls.update();
-
   const timeElapsed = clock.getElapsedTime();
-
-  var cameraXRotation = scene.getObjectByName("cameraXRotation");
-  if (cameraXRotation.rotation.x < 0) {
-    cameraXRotation.rotation.x += 0.01;
-  }
-
-  var cameraZPosition = scene.getObjectByName("cameraZPosition");
-  cameraZPosition.position.z -= 0.25;
-
-  var cameraZRotation = scene.getObjectByName("cameraZRotation");
-  cameraZRotation.rotation.z =
-    noise.simplex2(timeElapsed * 1.5, timeElapsed * 1.5) * 0.02;
-
-  var boxGrid = scene.getObjectByName("boxGrid");
-  boxGrid.children.forEach(function (child, index) {
-    var x = timeElapsed + index;
-    child.scale.y = (noise.simplex2(x, x) + 1) / 2 + 0.001;
+  const boxGrid = scene.getObjectByName("boxGrid");
+  boxGrid.children.forEach((child, i) => {
+    const x = timeElapsed * 5 + i;
+    child.scale.y = (noise.simplex2(x, x) + 1) / 2 + 0.01;
     child.position.y = child.scale.y / 2;
   });
-
-  requestAnimationFrame(() => update(render, scene, camera, controls, clock));
+  requestAnimationFrame(() => update(render, scene, camera, clock));
 }
 
 function getPointLight(intensity) {
@@ -140,13 +96,10 @@ function getDirectionLight(intensity) {
   const light = new THREE.DirectionalLight("#ffffff", intensity);
   light.castShadow = true;
 
-  light.shadow.camera.left = -40;
-  light.shadow.camera.top = -40;
-  light.shadow.camera.right = -40;
-  light.shadow.camera.bottom = -40;
-
-  light.shadow.mapSize.width = 4096;
-  light.shadow.mapSize.height = 4096;
+  light.shadow.camera.left = -10;
+  light.shadow.camera.top = -10;
+  light.shadow.camera.right = -10;
+  light.shadow.camera.bottom = -10;
 
   return light;
 }
@@ -158,7 +111,7 @@ function getAmbientLight(intensity) {
 function getBox(w, h, d) {
   const geometry = new THREE.BoxGeometry(w, h, d);
   const material = new THREE.MeshPhongMaterial({
-    color: "rgb(36,100,36)"
+    color: "rgb(120,120,120)"
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.castShadow = true;
@@ -169,12 +122,12 @@ function getBoxGrid(count, gap) {
   const group = new THREE.Group();
   gap = gap + 1;
   for (let i = 0; i <= count; i++) {
-    const box = getBox(1, 3, 1);
+    const box = getBox(1, 1, 1);
     box.position.x = i * gap;
     box.position.y = box.geometry.parameters.height / 2;
     group.add(box);
     for (let j = 0; j <= count; j++) {
-      const box = getBox(1, 3, 1);
+      const box = getBox(1, 1, 1);
       box.position.x = i * gap;
       box.position.y = box.geometry.parameters.height / 2;
       box.position.z = j * gap;
@@ -199,7 +152,7 @@ function getSphere(size) {
 function getPlane(size) {
   const geometry = new THREE.PlaneGeometry(size, size);
   const material = new THREE.MeshPhongMaterial({
-    color: "rgb(36,50,120)",
+    color: "rgb(120,120,120)",
     side: THREE.DoubleSide
   });
   const mesh = new THREE.Mesh(geometry, material);
