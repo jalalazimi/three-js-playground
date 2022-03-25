@@ -6,11 +6,12 @@ function init() {
   const innerHeight = window.innerHeight;
 
   const scene = new THREE.Scene();
-
-  const plane = getPlane(4);
+  scene.fog = new THREE.FogExp2(0xffffff, 0.2);
+  const plane = getPlane(20);
   const box = getBox(1, 1, 1);
 
   box.position.y = box.geometry.parameters.height / 2;
+  plane.name = "plane-1";
   plane.rotation.x = Math.PI / 2;
 
   scene.add(box);
@@ -30,10 +31,16 @@ function init() {
   const render = new THREE.WebGLRenderer();
 
   render.setSize(innerWidth, innerHeight);
-
+  render.setClearColor(0xffffff);
   document.getElementById("webgl").appendChild(render.domElement);
+  update(render, scene, camera);
+  return scene;
+}
 
+function update(render, scene, camera) {
   render.render(scene, camera);
+
+  requestAnimationFrame(() => update(render, scene, camera));
 }
 
 function getBox(w, h, d) {
@@ -53,4 +60,4 @@ function getPlane(size) {
   return new THREE.Mesh(geometry, material);
 }
 
-init();
+window.scene = init();
